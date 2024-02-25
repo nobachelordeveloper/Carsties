@@ -3,6 +3,8 @@ using AuctionService.DTOs;
 using AuctionService.Entities;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Contracts;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +16,15 @@ namespace AuctionService.Controllers
     {
         private readonly AuctionDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         // IMapper interface is from automapper package
-        public AuctionsController(AuctionDbContext context, IMapper mapper)
+        // IPublishEndpoint interface is from MassTransit package
+        public AuctionsController(AuctionDbContext context, IMapper mapper, IPublishEndpoint publishEndpoint)
         {
             _context = context;
             _mapper = mapper;
+            _publishEndpoint = publishEndpoint;
         }
 
         // Get all auctions after a certain date
@@ -67,7 +72,14 @@ namespace AuctionService.Controllers
             auction.Seller = "test";
 
             _context.Auctions.Add(auction);
+            var newAuction = _mapper.Map<AuctionDto>(auction);
+            // create AuctionDto from auction using MappingProfile.cs
+            // PUBLISH TO MASS TRANSIT OUTBOX
+            // IF WE CANT PUBLISH TO OUTBOX THE WHOLE TRANSACTION FAILS
+            await _publishEndpoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
+            // create AuctionCreated from AuctionDto using MappingProfile.cs
 
+            // save to POSTGRES
             var result = await _context.SaveChangesAsync() > 0;
 
             if (!result) return BadRequest("Could not save changes to the DB");
@@ -92,6 +104,9 @@ namespace AuctionService.Controllers
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
             auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
 
+            // PUBLISH UPDATED AUCTION TO MASS TRANSIT OUTBOX
+            await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
+
             var result = await _context.SaveChangesAsync() > 0;
 
             if (result) return Ok();
@@ -109,6 +124,9 @@ namespace AuctionService.Controllers
             // TODO: check seller == username
 
             _context.Auctions.Remove(auction);
+
+            // PUBLISH DELETED AUCTION TO MASS TRANSIT OUTBOX
+            await _publishEndpoint.Publish<AuctionDeleted>(new { Id = auction.Id.ToString() });
 
             var result = await _context.SaveChangesAsync() > 0;
 

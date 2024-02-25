@@ -1,4 +1,6 @@
+using AuctionService.Consumers;
 using AuctionService.Data;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,33 @@ builder.Services.AddDbContext<AuctionDbContext>(opt =>
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 // this line refers to 'RequestHelpers/MappingProfiles.cs'
+
+//initialize masstransit
+builder.Services.AddMassTransit(x =>
+{
+    // Setup the outbox for failed messages to RabbitMq
+    x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
+    {
+        // The query will check for messages in the outbox every 10 seconds
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+
+        // https://masstransit.io/documentation/configuration/middleware/outbox
+        // Outboxes for mass transit can only be configurd with postgres, sqlserver, and mysql
+        o.UsePostgres();
+        o.UseBusOutbox();
+    });
+
+    // this is to consume fault consumers from AuctionCreatedFaultConsumer.cs
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
+    // this is to set a custom endpoint on RabbitMq
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));
+    // this creates "auction-auction-created-fault" exchange on RabbitMq
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 var app = builder.Build();
 
