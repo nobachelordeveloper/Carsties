@@ -20,7 +20,7 @@ builder.Services.AddHttpClient<AuctionSvcHttpClient>().AddPolicyHandler(GetPolic
 builder.Services.AddMassTransit(x =>
 {
     // Any consumer that is in the same namespace as the AuctionCreatedConsumer will be automatically registered by mass transit
-    x.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
+    x.AddConsumersFromNamespaceContaining<AuctionDeletedConsumer>();
     // Format the endpoint name to kebab case so that the we can recognize this particular AuctionCreatedConsumer came from Search Service
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
     // this creates search-auction-created exchange on RabbitMq
