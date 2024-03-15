@@ -119,6 +119,7 @@ namespace AuctionService.Controllers
             return BadRequest("Problem saving changes");
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteAuction(Guid id)
         {

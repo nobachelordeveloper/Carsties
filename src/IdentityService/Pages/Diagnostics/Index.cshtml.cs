@@ -16,19 +16,23 @@ public class Index : PageModel
 
     public async Task<IActionResult> OnGet()
     {
-        var localAddresses = new List<string?> { "127.0.0.1", "::1" };
-        if(HttpContext.Connection.LocalIpAddress != null)
+        var localAddresses = new List<string?> { "::ffff:172.18.0.1", "127.0.0.1", "::1" };
+        if (HttpContext.Connection.LocalIpAddress != null)
         {
             localAddresses.Add(HttpContext.Connection.LocalIpAddress.ToString());
         }
 
-        if (!localAddresses.Contains(HttpContext.Connection.RemoteIpAddress?.ToString()))
+        //checked LECTURE 72 IN ORDER TO PROPERLY RETRIEVE LOCALADDRESS WHEN THIS IS RUNNING IN DOCKERCONTAINER
+        // original code:
+        // if (!localAddresses.Contains(HttpContext.Connection.RemoteIpAddress?.ToString()))
+        // modified code removed (!localAddresses.Contains(HttpContext.Connection.RemoteIpAddress?.ToString()))
+        if (false)
         {
             return NotFound();
         }
 
         View = new ViewModel(await HttpContext.AuthenticateAsync());
-            
+
         return Page();
     }
 }
