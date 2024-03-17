@@ -10,6 +10,8 @@ COPY src/SearchService/SearchService.csproj src/SearchService/SearchService.cspr
 COPY src/GatewayService/GatewayService.csproj src/GatewayService/GatewayService.csproj
 COPY src/Contracts/Contracts.csproj src/Contracts/Contracts.csproj
 COPY src/IdentityService/IdentityService.csproj src/IdentityService/IdentityService.csproj
+COPY tests/AuctionService.UnitTests/AuctionService.UnitTests.csproj tests/AuctionService.UnitTests/AuctionService.UnitTests.csproj
+COPY tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj tests/AuctionService.IntegrationTests/AuctionService.IntegrationTests.csproj
 
 # Restore package deps
 RUN dotnet restore Carsties.sln
@@ -19,11 +21,12 @@ COPY src/IdentityService src/IdentityService
 WORKDIR /app/src/IdentityService
 RUN dotnet publish -c Release -o /app/src/out
 
-# Install vsdbg
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends unzip \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
+# Install vsdbg (Find out what I need to add to the dockerfile to be able to click from the top menu bar debug->attach to process->this docker container in order to debug )
+# Connection type is Docker "Linux Container" Connection target is "carsties-identity-svc-1" and targeting the .dll file specifically in the below panel
+# RUN apt-get update \
+#    && apt-get install -y --no-install-recommends unzip \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0

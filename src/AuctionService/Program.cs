@@ -42,6 +42,8 @@ builder.Services.AddMassTransit(x =>
             options.TokenValidationParameters.NameClaimType = "username";
         });
 
+    builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
+
     // this is to consume fault consumers from AuctionCreatedFaultConsumer.cs and every other consumer in the same namespace
     x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
     // this is to set a custom endpoint on RabbitMq
@@ -80,3 +82,5 @@ catch (Exception e)
 }
 
 app.Run();
+
+public partial class Program { }
