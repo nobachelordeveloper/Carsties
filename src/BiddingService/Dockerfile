@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
 WORKDIR /app
 EXPOSE 80
 
@@ -19,19 +19,13 @@ COPY tests/SearchService.IntegrationTests/SearchService.IntegrationTests.csproj 
 RUN dotnet restore Carsties.sln
 
 # Copy the app folders over
-COPY src/IdentityService src/IdentityService
-WORKDIR /app/src/IdentityService
+COPY src/BiddingService src/BiddingService
+COPY src/Contracts src/Contracts
+WORKDIR /app/src/BiddingService
 RUN dotnet publish -c Release -o /app/src/out
-
-# Install vsdbg (Find out what I need to add to the dockerfile to be able to click from the top menu bar debug->attach to process->this docker container in order to debug )
-# Connection type is Docker "Linux Container" Connection target is "carsties-identity-svc-1" and targeting the .dll file specifically in the below panel
-# RUN apt-get update \
-#    && apt-get install -y --no-install-recommends unzip \
-#     && rm -rf /var/lib/apt/lists/* \
-#     && curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app/src/out .
-ENTRYPOINT [ "dotnet", "IdentityService.dll" ]
+ENTRYPOINT [ "dotnet", "BiddingService.dll" ]

@@ -1,5 +1,6 @@
 using AuctionService.Consumers;
 using AuctionService.Data;
+using AuctionService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +44,7 @@ builder.Services.AddMassTransit(x =>
         });
 
     builder.Services.AddScoped<IAuctionRepository, AuctionRepository>();
+    builder.Services.AddGrpc();
 
     // this is to consume fault consumers from AuctionCreatedFaultConsumer.cs and every other consumer in the same namespace
     x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
@@ -70,6 +72,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGrpcService<GrpcAuctionService>();
 
 try
 {
